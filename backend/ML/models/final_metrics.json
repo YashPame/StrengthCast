@@ -1,0 +1,74 @@
+{
+  "model_name": "XGBoost",
+  "features": [
+    "cement",
+    "blast_furnace_slag",
+    "fly_ash",
+    "water",
+    "superplasticizer",
+    "coarse_aggregate",
+    "fine_aggregate",
+    "age"
+  ],
+  "target": "compressive_strength",
+  "target_unit": "MPa",
+  "feature_ranges": {
+    "cement": {
+      "min": 102.0,
+      "max": 540.0
+    },
+    "blast_furnace_slag": {
+      "min": 0.0,
+      "max": 359.4
+    },
+    "fly_ash": {
+      "min": 0.0,
+      "max": 200.1
+    },
+    "water": {
+      "min": 121.75,
+      "max": 247.0
+    },
+    "superplasticizer": {
+      "min": 0.0,
+      "max": 32.2
+    },
+    "coarse_aggregate": {
+      "min": 801.0,
+      "max": 1145.0
+    },
+    "fine_aggregate": {
+      "min": 594.0,
+      "max": 992.6
+    },
+    "age": {
+      "min": 1.0,
+      "max": 365.0
+    }
+  },
+  "best_params": {
+    "subsample": 0.85,
+    "reg_lambda": 0.5,
+    "n_estimators": 600,
+    "min_child_weight": 5,
+    "max_depth": 4,
+    "learning_rate": 0.1,
+    "colsample_bytree": 0.6
+  },
+  "metrics": {
+    "train_R2": 0.990073351777095,
+    "test_R2": 0.9522985544463397,
+    "train_RMSE": 1.624029096764296,
+    "test_RMSE": 3.533965328068481,
+    "train_MAE": 1.0253466492280154,
+    "test_MAE": 2.494949760915508,
+    "cv_R2": 0.9251733274454835
+  },
+  "split": {
+    "test_size": 0.2,
+    "random_state": 42,
+    "stratify": "age_group x strength_quintile",
+    "n_train": 804,
+    "n_test": 201
+  }
+}

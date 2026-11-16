@@ -1,0 +1,85 @@
+"""FastAPI app: JSON API under /api and the built React frontend (frontend/dist) at /.
+
+Run from this backend folder (with the venv active):
+    uvicorn app:app --reload
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from model_service import ModelService
+
+DIST_DIR = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+app = FastAPI(
+    title="StrengthCast API",
+    description="StrengthCast: Machine Learning-Based Concrete Compressive Strength Prediction. "
+                "Know the strength before you pour.",
+    version="1.0.0",
+)
+service = ModelService.load()
+
+# The Vite dev server (npm run dev, :5173) proxies /api, but allow direct calls too.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
+
+class Mix(BaseModel):
+    """One cubic metre of concrete. Ingredients in kg/m³, age in days."""
+    cement: float = Field(gt=0, le=2000)
+    blast_furnace_slag: float = Field(ge=0, le=2000)
+    fly_ash: float = Field(ge=0, le=2000)
+    water: float = Field(gt=0, le=1000)
+    superplasticizer: float = Field(ge=0, le=200)
+    coarse_aggregate: float = Field(ge=0, le=3000)
+    fine_aggregate: float = Field(ge=0, le=3000)
+    age: float = Field(ge=1, le=3650)
+
+
+@app.get("/api/meta")
+def meta() -> dict:
+    return service.meta()
+
+
+@app.post("/api/predict")
+def predict(mix: Mix) -> dict:
+    return service.predict(mix.model_dump())
+
+
+@app.post("/api/age-curve")
+def age_curve(mix: Mix) -> list[dict]:
+    return service.age_curve(mix.model_dump())
+
+
+@app.post("/api/sensitivity")
+def sensitivity(mix: Mix) -> dict:
+    return service.sensitivity(mix.model_dump())
+
+
+@app.get("/api/health")
+def health() -> dict:
+    return {"status": "ok", "model": service.model_name}
+
+
+# Mounted last so /api routes take precedence
+if DIST_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=DIST_DIR, html=True), name="frontend")
+else:
+    @app.get("/", include_in_schema=False, response_class=HTMLResponse)
+    def frontend_not_built() -> str:
+        return (
+            "<!doctype html><title>StrengthCast</title>"
+            "<p>The React frontend is not built yet. In <code>frontend</code> run "
+            "<code>npm install</code> then <code>npm run build</code>, or use <code>npm run dev</code> "
+            "and open http://localhost:5173.</p>"
+        )

@@ -1,0 +1,11 @@
+# Versions match the training environment (../python-env). The pickled models need compatible
+# scikit-learn, xgboost and lightgbm versions to load.
+fastapi==0.162.5
+uvicorn==0.54.0
+pydantic==2.13.4
+joblib==1.6.0
+numpy==2.2.6
+pandas==2.3.3
+scikit-learn==1.7.2
+xgboost==3.2.0
+lightgbm==4.7.0

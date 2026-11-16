@@ -1,0 +1,103 @@
+{
+  "model_name": "LightGBM",
+  "features": [
+    "cement",
+    "blast_furnace_slag",
+    "fly_ash",
+    "water",
+    "superplasticizer",
+    "coarse_aggregate",
+    "fine_aggregate",
+    "age"
+  ],
+  "model_features": [
+    "cement",
+    "blast_furnace_slag",
+    "fly_ash",
+    "water",
+    "superplasticizer",
+    "coarse_aggregate",
+    "fine_aggregate",
+    "log_age",
+    "water_binder",
+    "water_cement",
+    "total_binder"
+  ],
+  "monotone_directions": {
+    "log_age": 1,
+    "cement": 1,
+    "total_binder": 1,
+    "water": -1,
+    "water_binder": -1,
+    "water_cement": -1
+  },
+  "target": "compressive_strength",
+  "target_unit": "MPa",
+  "target_transform": "model learns sqrt(strength); prediction = clip(output, 0)**2",
+  "feature_ranges": {
+    "cement": {
+      "min": 102.0,
+      "max": 540.0
+    },
+    "blast_furnace_slag": {
+      "min": 0.0,
+      "max": 359.4
+    },
+    "fly_ash": {
+      "min": 0.0,
+      "max": 200.1
+    },
+    "water": {
+      "min": 121.75,
+      "max": 247.0
+    },
+    "superplasticizer": {
+      "min": 0.0,
+      "max": 32.2
+    },
+    "coarse_aggregate": {
+      "min": 801.0,
+      "max": 1145.0
+    },
+    "fine_aggregate": {
+      "min": 594.0,
+      "max": 992.6
+    },
+    "age": {
+      "min": 1.0,
+      "max": 365.0
+    }
+  },
+  "best_params": {
+    "learning_rate": 0.025281215082335638,
+    "n_estimators": 1200,
+    "num_leaves": 27,
+    "min_child_samples": 4,
+    "subsample": 0.8263278403328832,
+    "colsample_bytree": 0.412258832838783,
+    "reg_lambda": 0.03339062586363663,
+    "reg_alpha": 0.10430157355597591
+  },
+  "metrics": {
+    "test_R2": 0.9448665278180216,
+    "test_RMSE": 3.682136119815738,
+    "test_MAE": 2.4492885106347964,
+    "train_R2": 0.9844136850513842,
+    "train_RMSE": 2.0491849272488625,
+    "cv_R2": 0.9303011972154624,
+    "cv_RMSE": 4.33333323848065,
+    "repeated_cv_R2": 0.9339929447672463,
+    "repeated_cv_R2_std": 0.001340490954757319,
+    "repeated_cv_RMSE": 4.181641477927598,
+    "new_mix_grouped_cv_R2": 0.8996216364091955,
+    "new_mix_grouped_cv_RMSE": 5.156812540782883
+  },
+  "split": {
+    "method": "row-level train_test_split stratified by curing age",
+    "test_fraction": 0.2,
+    "random_state": 42,
+    "n_train": 804,
+    "n_test": 201
+  },
+  "trained_on": "all 1005 rows after evaluation"
+}
