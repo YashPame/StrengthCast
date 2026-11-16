@@ -1,0 +1,103 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="ZTfaqAXl0NdjaiePH_Y3" name="High-level architecture">
+    <mxGraphModel dx="1288" dy="703" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1260" pageHeight="840" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=20;" value="&lt;b&gt;StrengthCast&lt;/b&gt; — High-Level Architecture&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot; color=&quot;#666666&quot;&gt;&lt;i&gt;Know the strength before you pour.&lt;/i&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="600" x="330" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-2" parent="1" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fillColor=#F5F9FF;strokeColor=#6C8EBF;fontSize=14;" value="&lt;b&gt;Client — Web Browser&lt;/b&gt;" vertex="1">
+          <mxGeometry height="420" width="360" x="40" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-3" parent="1" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fillColor=#F6FBF4;strokeColor=#82B366;fontSize=14;" value="&lt;b&gt;Server — FastAPI (Python)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="420" width="380" x="520" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-4" parent="1" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=6;fillColor=#FAF6FC;strokeColor=#9673A6;fontSize=14;" value="&lt;b&gt;Offline ML Pipeline — Jupyter notebooks&lt;/b&gt;" vertex="1">
+          <mxGeometry height="180" width="700" x="520" y="582" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-5" parent="1" style="shape=umlActor;verticalLabelPosition=middle;labelPosition=right;align=left;spacingLeft=8;html=1;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#333333;" value="User&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot; color=&quot;#666666&quot;&gt;(engineer / student)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="30" x="60" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=13;" value="&lt;b&gt;StrengthCast UI&lt;/b&gt;&lt;br&gt;React 18 + Vite (single-page app)" vertex="1">
+          <mxGeometry height="55" width="320" x="60" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=12;" value="&lt;b&gt;Mix Design Panel&lt;/b&gt;&lt;br&gt;ingredients · curing age · presets · live ratios &amp;amp; warnings" vertex="1">
+          <mxGeometry height="60" width="320" x="60" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=12;" value="&lt;b&gt;Virtual Lab Animation&lt;/b&gt;&lt;br&gt;charge → mix → cast → cure → compression test" vertex="1">
+          <mxGeometry height="60" width="320" x="60" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;fontSize=12;" value="&lt;b&gt;Analysis&lt;/b&gt;&lt;br&gt;test log &amp;amp; compare · strength vs age · sensitivity" vertex="1">
+          <mxGeometry height="60" width="320" x="60" y="385" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-10" parent="1" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontColor=#555555;" value="Failure load (kN) = strength (MPa) × 22.5 (150 mm cube)" vertex="1">
+          <mxGeometry height="45" width="320" x="60" y="465" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;" value="&lt;b&gt;REST API&lt;/b&gt; (app.py)&lt;br&gt;/api/meta · /api/predict&lt;br&gt;/api/age-curve · /api/sensitivity" vertex="1">
+          <mxGeometry height="70" width="340" x="540" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;fontSize=12;" value="&lt;b&gt;Validation &amp;amp; Safety Checks&lt;/b&gt;&lt;br&gt;Pydantic schema · training-range &amp;amp; density (2200–2600 kg/m³) warnings" vertex="1">
+          <mxGeometry height="60" width="340" x="540" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;" value="&lt;b&gt;Model Service&lt;/b&gt; (model_service.py)&lt;br&gt;predict ± RMSE · strength-vs-age · sensitivity · presets" vertex="1">
+          <mxGeometry height="70" width="340" x="540" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;fontSize=12;" value="&lt;b&gt;Static File Server&lt;/b&gt;&lt;br&gt;serves the built UI (frontend/dist)" vertex="1">
+          <mxGeometry height="55" width="340" x="540" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-15" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=12;" value="&lt;b&gt;Trained Model&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;Model → LightGBM&lt;br&gt;(test R² 0.945 · RMSE 3.68 MPa)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="240" x="980" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-16" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#F5F5F5;strokeColor=#666666;fontSize=12;" value="&lt;b&gt;UCI Concrete Dataset&lt;/b&gt;&lt;br&gt;1030 mixes · 8 inputs" vertex="1">
+          <mxGeometry height="95" width="140" x="545" y="632" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-17" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;" value="&lt;b&gt;Load &amp;amp; EDA&lt;/b&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="715" y="649" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-18" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;" value="&lt;b&gt;Outliers &amp;amp; Split&lt;/b&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="855" y="649" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=12;" value="&lt;b&gt;Train · Tune · Evaluate&lt;/b&gt;" vertex="1">
+          <mxGeometry height="60" width="170" x="1015" y="649" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-20" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="B2mT-B-xISrLMWYNn8AC-6" value="enter mix, run test">
+          <mxGeometry relative="1" x="-0.2093" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="75" y="100" />
+              <mxPoint x="220" y="100" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-21" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;startArrow=block;startFill=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=2;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.17;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="B2mT-B-xISrLMWYNn8AC-11" value="HTTP / JSON&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;mix + age →&lt;br&gt;strength, ±RMSE,&lt;br&gt;load, warnings&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-22" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-14" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#999999;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;" target="B2mT-B-xISrLMWYNn8AC-2" value="serves UI&lt;br&gt;(HTML / JS / CSS)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-23" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#82B366;" target="B2mT-B-xISrLMWYNn8AC-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-24" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#82B366;" target="B2mT-B-xISrLMWYNn8AC-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-25" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#D79B00;strokeWidth=2;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" target="B2mT-B-xISrLMWYNn8AC-15" value="loads once at &lt;br&gt;startup&lt;br&gt;predict()">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-26" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-16" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;" target="B2mT-B-xISrLMWYNn8AC-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-27" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-17" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;" target="B2mT-B-xISrLMWYNn8AC-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-28" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-18" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;" target="B2mT-B-xISrLMWYNn8AC-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="B2mT-B-xISrLMWYNn8AC-29" edge="1" parent="1" source="B2mT-B-xISrLMWYNn8AC-19" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#9673A6;strokeWidth=2;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="B2mT-B-xISrLMWYNn8AC-15" value="saves .joblib&lt;br&gt;(features.py shared by&lt;br&gt;training &amp;amp; serving)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

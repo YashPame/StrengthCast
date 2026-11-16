@@ -79,12 +79,21 @@ panel on the right holds the inputs.
 
 ## How it works
 
-```
- React UI  ──POST /api/predict──▶  FastAPI  ──▶  ModelService  ──▶  sklearn Pipeline
- (mix panel,      (flat JSON mix)    app.py       model_service.py     ConcreteFeatures → LightGBM
-  animation,  ◀── strength, ±RMSE,                 (range + density     (backend/ML/features.py)
-  charts)         load, warnings                    checks, presets)
-```
+### Architecture
+
+![StrengthCast high-level architecture](docs/StrengthCast.png)
+
+The app has three parts:
+
+- **Client (web browser):** the React app where you design the mix, watch the virtual test and explore the results.
+- **Server (FastAPI):** checks the inputs and runs the trained model. The same server also hosts the web page itself.
+- **Offline ML pipeline:** Jupyter notebooks that train the model and save it as a `.joblib` file, which the
+  server loads once at startup.
+
+Editable source: [`docs/StrengthCast.drawio`](docs/StrengthCast.drawio). Open it in
+[diagrams.net](https://app.diagrams.net) or the VS Code Draw.io extension.
+
+### Request flow
 
 1. The frontend sends the 8 raw inputs: 7 ingredients in kg/m³ plus age in days.
 2. The backend loads the trained pipeline once at startup and checks the inputs against the training
@@ -179,7 +188,9 @@ Full results: [`model_comparison_v2.csv`](backend/ML/models/model_comparison_v2.
 │       ├── lib/stage.js     SVG animation: mixer, mould, curing tank, compression machine, console
 │       ├── lib/mix.js       Derived values and instant client-side warnings
 │       └── components/      MixPanel, IngredientIcon, StageView, TestLog, Analysis, charts, Tooltip
-├── docs/images/             README screenshots and demo GIF
+├── docs/
+│   ├── StrengthCast.drawio  Architecture diagram (editable source) + StrengthCast.png export
+│   └── images/              README screenshots and demo GIF
 └── requirements.txt
 ```
 
