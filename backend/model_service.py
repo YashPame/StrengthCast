@@ -16,7 +16,7 @@ import pandas as pd
 # The model is loaded straight from the ML notebooks' output folder (backend/ML/models).
 # To switch models, change MODEL_FILE to another bundle saved in that folder.
 MODEL_DIR = Path(__file__).resolve().parent / "ML" / "models"
-MODEL_FILE = "concrete_strength_model_v2.joblib"
+MODEL_FILE = "concrete_strength_model_v3.joblib"
 MODEL_PATH = MODEL_DIR / MODEL_FILE
 
 # Test ages present in the training data. Predictions between them are interpolation by the trees.

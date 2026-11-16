@@ -13,6 +13,16 @@ const STEPS = [
 ];
 const TABS = [['log', 'Test log'], ['age', 'Strength vs age'], ['sens', 'Sensitivity']];
 
+// Hover text for the model chip: typical error for known mixes, and for brand-new mix designs if the bundle has it.
+function modelChipTitle(m) {
+  const lines = [`Typical error ±${m.test_RMSE.toFixed(2)} MPa (held-out test set, MAE ${m.test_MAE?.toFixed(2) ?? '–'} MPa).`];
+  if (m.new_mix_grouped_cv_RMSE != null) {
+    lines.push(`Brand-new mix designs: ±${m.new_mix_grouped_cv_RMSE.toFixed(2)} MPa (grouped CV R² ${m.new_mix_grouped_cv_R2.toFixed(3)}).`);
+  }
+  lines.push('Physics-constrained: strength never falls with age or cement, never rises with water.');
+  return lines.join('\n');
+}
+
 export default function App() {
   const [meta, setMeta] = useState(null);
   const [apiError, setApiError] = useState(null);
@@ -118,7 +128,7 @@ export default function App() {
             <p>Machine Learning-Based Concrete Compressive Strength Prediction</p>
           </div>
         </div>
-        <div className="model-chip">
+        <div className="model-chip" title={metrics ? modelChipTitle(metrics) : undefined}>
           {apiError ? 'API unavailable'
             : metrics ? `${meta.model_name} · test R² ${metrics.test_R2.toFixed(3)} · RMSE ${metrics.test_RMSE.toFixed(2)} MPa`
               : 'Loading model…'}

@@ -20,13 +20,13 @@ Layout (project root): `backend/` (FastAPI code, plus `backend/Data/` and `backe
 
 - `backend/Data/concrete_data.csv`: raw dataset (do not overwrite)
 - `backend/Data/concrete_data_cleaned.csv`: output of `01_Data_Loading.ipynb`, with columns renamed to snake_case. Later steps should read this file.
-- `backend/ML/models/concrete_strength_model.joblib`: output of `04_Modeling.ipynb`. It's a dict with these keys:
-  - `pipeline`: StandardScaler + tuned XGBoost; takes raw, unscaled features
+- `backend/ML/models/concrete_strength_model_v3.joblib`: output of `05_Model.ipynb`, the model the app serves. It's a dict with these keys:
+  - `pipeline`: `ConcreteFeatures` (from `ML/features.py`) → scaler → tuned, monotonic-constrained LightGBM learning √strength; takes the 8 raw inputs
   - `features`: required column order
   - `feature_ranges`: training min/max per feature, for flagging extrapolation
-  - `metrics`, `best_params`, `split`
-  - `model_comparison.csv` and `final_metrics.json` sit alongside it.
-- `backend/ML/`: numbered Jupyter notebooks (`01_Data_Loading.ipynb`, ...) that form the pipeline in order. They use paths relative to `ML/` (`../Data/...`), which still resolve because `ML/` and `Data/` are siblings inside `backend/`.
+  - `metrics` (`cv_R2`, `cv_RMSE`, `test_R2`, `test_RMSE`, `test_MAE`, `new_mix_grouped_cv_R2`, `new_mix_grouped_cv_RMSE`), `model_name`, `best_params`
+  - Older bundles (`concrete_strength_model.joblib`, `_v2`) are kept for switching back.
+- `backend/ML/`: numbered Jupyter notebooks (`01_Data_Loading.ipynb` … `04_DataSplit` (split + CV folds + engineered features → `ML/data/splits.csv`), `05_Model`) that form the pipeline in order; earlier versions live in `ML/archive/`. They use paths relative to `ML/` (`../Data/...`), which still resolve because `ML/` and `Data/` are siblings inside `backend/`.
 
 ## Application (project root)
 

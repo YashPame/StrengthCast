@@ -48,7 +48,8 @@ it fails at the predicted load.
 - **Input checks.** Any value outside the training data range is flagged as an extrapolation, and a total
   mass outside the realistic 2200–2600 kg/m³ window is also flagged. The app still predicts, but it tells
   you not to trust the number blindly.
-- **Uncertainty.** Every prediction carries ± the model's test RMSE.
+- **Uncertainty.** Every prediction carries ± the model's test RMSE (3.73 MPa). Hovering the model chip in the
+  header also shows the larger error for brand-new mix designs (5.07 MPa).
 - **Test log and comparison.** Every cube you test is logged. Tick two or more to compare them side by
   side, with differences shown against the first.
 - **Strength vs age.** For the latest cube, the predicted strength development from 3 to 365 days with
@@ -109,11 +110,11 @@ The notebooks in [`backend/ML/`](backend/ML) form the pipeline and are run in or
 
 | Notebook | Purpose |
 |---|---|
-| `01_Data_Loading` | Load and inspect the raw data (1030 rows, including 25 exact duplicates, so 1005 unique mixes are used) |
+| `01_Data_Loading` | Load and inspect the raw data (1030 rows, including 25 exact duplicates, so 1005 unique rows from 428 mix designs are used) |
 | `02_EDA` | Distributions, correlations, multicollinearity (VIF), strength vs age |
 | `03_OutlierDetection` | IQR and z-score checks. All rows are kept: the flagged ones are real high-performance or edge-of-range mixes |
-| `04_DataSplit` | 80/20 train/test split and 5 CV folds, stratified by curing age |
-| `05_Model` | Compare models, apply physics constraints, tune, select, evaluate, save |
+| `04_DataSplit` | Dedupe → 80/20 train/test split and 5 CV folds (stratified by curing age) → engineered features |
+| `05_Model` | Baselines (raw vs engineered) → Optuna tuning of the top 3 → physics constraints → test set → new-mix check → save |
 
 Key modelling choices:
 
@@ -126,37 +127,52 @@ Key modelling choices:
 
 ## Model performance
 
-Selected model: **LightGBM** with engineered features and monotonic constraints
-(`backend/ML/models/concrete_strength_model_v2.joblib`).
+Selected model: **LightGBM**, tuned, with engineered features and physics monotonic constraints
+(`backend/ML/models/concrete_strength_model_v3.joblib`, refit on all 1,005 rows after evaluation).
 
 | Metric | Value |
 |---|---|
-| Test R² (held-out 20%) | **0.945** |
-| Test RMSE | 3.68 MPa |
-| Test MAE | 2.45 MPa |
-| 5-fold CV R² | 0.930 |
-| Repeated CV R² | 0.934 ± 0.001 |
-| Grouped-by-mix CV R² (completely new mix designs) | 0.900 (RMSE 5.16 MPa) |
+| Test R² (held-out 20%) | **0.944** |
+| Test RMSE | 3.73 MPa |
+| Test MAE | 2.53 MPa |
+| 5-fold CV R² | 0.928 |
+| 5-fold CV RMSE | 4.35 MPa |
+| Test predictions within ±5 / ±10 MPa | 87% / 97% |
+| **Brand-new mix designs** (grouped-by-mix CV) | R² 0.900 · RMSE 5.07 MPa · MAE 3.59 MPa |
 
-The test split is by row, stratified by age, so the test score means "known mix, new curing age". The
-grouped-by-mix score is the better guide for a brand-new mix design.
+The test split is by row, stratified by age, so the test score means "known mix, new curing age": 74% of test
+rows are mixes the model saw at another age. For a brand-new mix design, the grouped-by-mix score is the better
+guide: there every row of a mix stays on one side of the split, so the mix is never seen at any age
+(`05_Model`, section 6.2). The app's model chip shows both error figures on hover.
 
-Cross-validated R² of the candidate models (engineered features):
+**How the model was chosen** ([`05_Model`](backend/ML/05_Model.ipynb)):
 
-| Model | CV R² | CV RMSE (MPa) |
-|---|---|---|
-| Ridge | 0.809 | 7.17 |
-| KNN | 0.870 | 5.93 |
-| SVR (RBF) | 0.879 | 5.70 |
-| Random Forest | 0.904 | 5.09 |
-| Extra Trees | 0.908 | 4.99 |
-| XGBoost | 0.926 | 4.45 |
-| LightGBM | 0.926 | 4.46 |
-| Gradient Boosting | 0.928 | 4.40 |
-| **LightGBM, tuned + constrained (selected)** | **0.930** | **4.33** |
+1. **Baselines.** 11 models with default parameters, each on raw and engineered features, scored on 5 CV folds.
+   Engineered features improved every model; the boosting models led.
+2. **Tuning.** The top 3 (LightGBM, HistGradientBoosting, XGBoost) were tuned with Optuna on the same folds.
+3. **Physics constraints.** The tuned unconstrained models failed the physics check (strength falling with age
+   in 43–56 mixes; more cement lowering strength somewhere in every mix). The constrained models were re-baselined
+   and re-tuned, and all pass it.
+4. **Selection** by CV RMSE among models that pass the physics check, then scored once on the test set.
+5. **New-mix check.** Grouped-by-mix CV on all 1,005 rows, then the selected model is refit on all rows and saved.
 
-Full results: [`model_comparison_v2.csv`](backend/ML/models/model_comparison_v2.csv) and
-[`final_metrics_v2.json`](backend/ML/models/final_metrics_v2.json).
+| Model (engineered features) | Stage | CV R² | CV RMSE | Test R² | Test RMSE | Physics check |
+|---|---|---|---|---|---|---|
+| Linear Regression | baseline | 0.808 | 7.16 | 0.800 | 7.01 | – |
+| KNN | baseline | 0.836 | 6.61 | 0.861 | 5.84 | – |
+| SVR | baseline | 0.893 | 5.35 | 0.899 | 4.98 | – |
+| Random Forest | baseline | 0.901 | 5.11 | 0.930 | 4.16 | – |
+| Extra Trees | baseline | 0.901 | 5.10 | 0.929 | 4.19 | – |
+| Gradient Boosting | baseline | 0.904 | 5.04 | 0.923 | 4.35 | – |
+| XGBoost | baseline | 0.907 | 4.94 | 0.953 | 3.42 | – |
+| LightGBM | baseline | 0.918 | 4.64 | 0.945 | 3.67 | – |
+| XGBoost | tuned | 0.927 | 4.36 | 0.953 | 3.40 | fails |
+| LightGBM | tuned | 0.931 | 4.21 | 0.953 | 3.41 | fails |
+| XGBoost | tuned + constrained | 0.926 | 4.38 | 0.940 | 3.86 | passes |
+| **LightGBM** | **tuned + constrained (selected)** | **0.928** | **4.35** | **0.944** | **3.73** | **passes** |
+
+The unconstrained LightGBM is about 0.3 MPa more accurate, but its age curves and sensitivity sweeps contradict
+concrete physics, and the app shows exactly those views. The constraints were kept.
 
 ## Tech stack
 
@@ -177,7 +193,7 @@ Full results: [`model_comparison_v2.csv`](backend/ML/models/model_comparison_v2.
 │   └── ML/
 │       ├── 01_…05_*.ipynb   Training pipeline notebooks
 │       ├── features.py      Feature engineering shared by training and serving
-│       ├── data/            Saved train/test/fold assignment
+│       ├── data/            splits.csv: train/test split, CV folds and engineered features
 │       ├── models/          Trained model bundles + metrics (loaded by the app)
 │       └── archive/         Earlier notebook versions
 ├── frontend/
@@ -268,7 +284,8 @@ negative cement or water value, are rejected with a 422 error.
 
 ## Retraining or switching the model
 
-1. Run the notebooks in `backend/ML/` in order. `05_Model.ipynb` saves the bundle to `backend/ML/models/`.
+1. Run the notebooks in `backend/ML/` in order. `05_Model.ipynb` saves the bundle to `backend/ML/models/`
+   (currently `concrete_strength_model_v3.joblib`).
 2. The backend loads models straight from that folder. To use a different file, change `MODEL_FILE` at the
    top of [`backend/model_service.py`](backend/model_service.py).
 3. Restart the server.
