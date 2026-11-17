@@ -68,4 +68,13 @@ runs with the constrained model only. The older bundles (`concrete_strength_mode
 an entry in `MODELS` at one to switch back.
 
 `archive/` keeps the earlier notebooks: the old row-split modelling notebook (`04_Modeling`), the first versions
-of 03-05, and `05_Model_v2` (which produced the v2 model).
+of 03-05, and `05_Model_v2` (which produced the v2 model). It also holds the two legacy CSVs that the first
+versions wrote and read, `concrete_data_zscore_cleaned.csv` (from `03_OutlierDetection_v1`) and
+`concrete_data_folds.csv` (from `04_DataSplit_v1`, read by `05_Model_v1`). Those notebooks read them from
+`archive/` and the dataset from `../../Data/`.
+
+## Data files
+- `../Data/Concrete_Data.xls`: the original UCI file.
+- `../Data/concrete_data.csv`: written by `01_Data_Loading` (short columns: `slag`, `strength`); read by `02`–`04`.
+- `data/splits.csv`: written by `04_DataSplit`, with the columns renamed to `blast_furnace_slag` and
+  `compressive_strength`, plus split, fold, `mix_id` and the engineered features; read by `05_Model`.

@@ -238,13 +238,13 @@ gaps are real but small.
 ├── backend/
 │   ├── app.py               FastAPI app: /api routes + serves the built frontend at /
 │   ├── model_service.py     Loads both models, predict, age curve, sensitivity, input checks, presets
-│   ├── Data/                Dataset (raw .xls, CSV, fold split)
+│   ├── Data/                Dataset: original UCI .xls + concrete_data.csv (written by 01_Data_Loading)
 │   └── ML/
 │       ├── 01_…05_*.ipynb   Training pipeline notebooks
 │       ├── features.py      Feature engineering shared by training and serving
 │       ├── data/            splits.csv: train/test split, CV folds and engineered features
 │       ├── models/          Trained model bundles + metrics (loaded by the app)
-│       └── archive/         Earlier notebook versions
+│       └── archive/         Earlier notebook versions and the legacy CSVs they use
 ├── frontend/
 │   ├── index.html
 │   ├── vite.config.js       Dev server on :5173, proxies /api to :8000
