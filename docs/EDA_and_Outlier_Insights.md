@@ -139,7 +139,7 @@ Builds an ordered category for plotting (14 levels).
 - This is **not real**: concrete doesn't lose strength with age. Different ages were tested on **different sets of mixes** *(recomputed)*:
   - The 22 rows at **91 days** are 17 high-performance mixes (average 392 cement, 15 SP, 158 water).
   - The 54 rows at **90 days** are ordinary mixes (284 cement, no SP, 201 water).
-- **Raw age averages mix up the effect of age with the effect of mix composition.** This is a key reason the final model uses **monotonic constraints**: without them it can learn these false dips (see `05_Model`, section 4).
+- **Raw age averages mix up the effect of age with the effect of mix composition.** This is a key reason the app offers a **physics-constrained model** with monotonic constraints: without them a model can learn these false dips (see `05_Model`, section 4). The unconstrained model is kept alongside it for its lower error.
 
 Following **the same mix** across ages gives the true curve *(recomputed)*:
 
@@ -396,9 +396,9 @@ Age is excluded on purpose because long-term tests are real data, not errors. **
 | 3 | Age is skewed (3.27), and its link with strength is non-linear (Spearman 0.60 vs Pearson 0.33) | EDA 9, 17, 19 | Use **log(age)** as a feature |
 | 4 | **w/b is the strongest predictor** (−0.62 overall, −0.77 at 28 days) | EDA 21, 25 | Engineered `water_binder`, `water_cement`, `total_binder` |
 | 5 | w/c is misleading for slag and fly-ash mixes (up to 1.88) | EDA 8 | The app shows both w/c and w/b; w/b is the one to trust for blends |
-| 6 | Raw age averages zig-zag because different mixes were tested at different ages | EDA 14, 23 | **Monotonic constraints** (age ↑, cement ↑, water ↓) in the final model |
+| 6 | Raw age averages zig-zag because different mixes were tested at different ages | EDA 14, 23 | **Monotonic constraints** (age ↑, cement ↑, water ↓) in the physics-constrained model; the unconstrained model is offered alongside it |
 | 7 | Cement and age interact (cement helps most early, blends catch up late) | EDA 23, 24 | Use tree models (LightGBM), which capture interactions |
-| 8 | Raw ingredients have VIF 5–7.5 because the total mass is nearly constant | EDA 26 | Trees for the final model; never all four of `total_binder` + 3 binders in a linear model; the app checks 2200–2600 kg/m³ |
+| 8 | Raw ingredients have VIF 5–7.5 because the total mass is nearly constant | EDA 26 | Tree models (LightGBM, XGBoost) for both served models; never all four of `total_binder` + 3 binders in a linear model; the app checks 2200–2600 kg/m³ |
 | 9 | SP's benefit comes through lower water | EDA 11, 18, 25 | SP left unconstrained in the model; its effect is captured via w/b |
 | 10 | Fly ash lowers 28-day strength, but the gap shrinks later | EDA 11, 25 | Fly ash left unconstrained (no single correct direction) |
 | 11 | Only 2 rows at age 1 and 3 at age 120 | EDA 7 | Age 1 removed from the app's ages and curves |

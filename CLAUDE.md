@@ -14,17 +14,21 @@ Predictions supplement laboratory compression testing and do not replace it. Use
 
 ## Current state
 
-There is no git repo yet (`.gitignore` is ready: it excludes `frontend/dist`, `node_modules`, caches and venvs, and keeps data and models). `requirements.txt` (pinned, includes lightgbm for the v2 model) and `frontend/package.json` are the only dependency manifests.
+The project is a git repo (`.gitignore` excludes `frontend/dist`, `node_modules`, caches and venvs, and keeps data and models). `requirements.txt` (pinned, includes lightgbm and xgboost for the two served models) and `frontend/package.json` are the only dependency manifests.
 
 Layout (project root): `backend/` (FastAPI code, plus `backend/Data/` and `backend/ML/`), `frontend/`, `docs/images/` (README screenshots + demo GIF). There is no automated test suite (the old `tests/` folder was removed on request).
 
-- `backend/Data/concrete_data.csv`: raw dataset (do not overwrite)
-- `backend/Data/concrete_data_cleaned.csv`: output of `01_Data_Loading.ipynb`, with columns renamed to snake_case. Later steps should read this file.
-- `backend/ML/models/concrete_strength_model_v3.joblib`: output of `05_Model.ipynb`, the model the app serves. It's a dict with these keys:
-  - `pipeline`: `ConcreteFeatures` (from `ML/features.py`) → scaler → tuned, monotonic-constrained LightGBM learning √strength; takes the 8 raw inputs
-  - `features`: required column order
-  - `feature_ranges`: training min/max per feature, for flagging extrapolation
-  - `metrics` (`cv_R2`, `cv_RMSE`, `test_R2`, `test_RMSE`, `test_MAE`, `new_mix_grouped_cv_R2`, `new_mix_grouped_cv_RMSE`), `model_name`, `best_params`
+- `backend/Data/Concrete_Data.xls`: the original UCI file (do not overwrite)
+- `backend/Data/concrete_data.csv`: written by `01_Data_Loading.ipynb` from the .xls, with short snake_case columns (`cement, slag, fly_ash, water, superplasticizer, coarse_aggregate, fine_aggregate, age, strength`). `02`–`04` read it. `04_DataSplit` renames `slag` → `blast_furnace_slag` and `strength` → `compressive_strength` in `ML/data/splits.csv`, the names the models and the app use.
+- `backend/Data/concrete_data_folds.csv` and `concrete_data_zscore_cleaned.csv` are leftovers used only by the notebooks in `ML/archive/`.
+- The app serves **two models** from `05_Model.ipynb`, and the user switches between them in the UI. Neither is "the" model: the narrative is that each has an advantage (constrained = physically consistent curves for what-if/sensitivity; unconstrained = lowest error). Don't frame one as chosen over the other.
+  - `backend/ML/models/concrete_strength_model_v3.joblib`: physics-constrained LightGBM (test R² 0.944, RMSE 3.73; new mixes R² 0.900, RMSE 5.07; passes the physics check)
+  - `backend/ML/models/concrete_strength_model_v3_unconstrained.joblib`: unconstrained XGBoost (test R² 0.953, RMSE 3.40; new mixes R² 0.909, RMSE 4.84; 43 mixes with a falling age curve). XGBoost rather than LightGBM because it is better on new mixes (grouped CV), though LightGBM leads on CV.
+  - Each bundle is a dict with these keys:
+    - `pipeline`: `ConcreteFeatures` (from `ML/features.py`) → scaler → tuned regressor learning √strength; takes the 8 raw inputs
+    - `features`: required column order
+    - `feature_ranges`: training min/max per feature, for flagging extrapolation
+    - `metrics` (`cv_R2`, `cv_RMSE`, `test_R2`, `test_RMSE`, `test_MAE`, `new_mix_grouped_cv_R2`, `new_mix_grouped_cv_RMSE`), `model_name`, `constrained`, `best_params`
   - Older bundles (`concrete_strength_model.joblib`, `_v2`) are kept for switching back.
 - `backend/ML/`: numbered Jupyter notebooks (`01_Data_Loading.ipynb` … `04_DataSplit` (split + CV folds + engineered features → `ML/data/splits.csv`), `05_Model`) that form the pipeline in order; earlier versions live in `ML/archive/`. They use paths relative to `ML/` (`../Data/...`), which still resolve because `ML/` and `Data/` are siblings inside `backend/`.
 
@@ -34,13 +38,13 @@ This is the web UI. A FastAPI backend serves both the JSON API and the static fr
 
 - `backend/model_service.py` holds all model logic:
   - `backend/` is not a package: the server runs from inside it (`uvicorn app:app`), so `app.py` uses `from model_service import ...`. Scripts that import the backend from elsewhere must put `backend/` on `sys.path`
-  - loads the bundle straight from `backend/ML/models/`; `MODEL_FILE` at the top of the file picks which one (no copying after retraining)
+  - loads bundles straight from `backend/ML/models/`; `MODELS` at the top of the file maps each key (`constrained`, `unconstrained`) to a file and label, and `DEFAULT_MODEL` is `constrained` (no copying after retraining). `load_services()` returns one `ModelService` per bundle that exists; a missing unconstrained file is skipped
   - runs predict, age-curve and sensitivity
   - checks inputs against training ranges and the 2200–2600 kg/m³ density window, plus w/b outside 0.235–0.90 and a workability warning for w/b < 0.35 with no superplasticizer (`WB_RANGE`, `WB_DRY_NO_SP`; sent in `/api/meta` and mirrored in `frontend/src/lib/mix.js`)
   - defines the presets (real 28-day mixes from the dataset)
-- `backend/app.py` holds the pydantic `Mix` model (one flat body: 7 ingredients + `age`) and the routes (`/api/meta`, `/api/predict`, `/api/age-curve`, `/api/sensitivity`, `/api/health`). It serves the built `frontend/dist` at `/`.
+- `backend/app.py` holds the pydantic `Mix` model (one flat body: 7 ingredients + `age`) and the routes (`/api/meta`, `/api/predict`, `/api/age-curve`, `/api/sensitivity`, `/api/health`). The POST routes take `?model=<key>` (default `constrained`; unknown → 422), and `/api/meta` adds `models` (key, label, model_name, constrained, metrics) and `default_model`. It serves the built `frontend/dist` at `/`.
 - `frontend/` is React 18 + Vite (plain JSX). The only libraries are react and react-dom. Charts and the animation are hand-written SVG. The design was ported from the earlier vanilla-JS version in `ApplicationOld/`.
-  - `src/App.jsx`: state, the mix & test flow, test log, tabs, and warnings (client warnings while editing; server warnings after a test, until the next edit)
+  - `src/App.jsx`: state, the mix & test flow, test log, tabs, warnings (client warnings while editing; server warnings after a test, until the next edit), and the header model toggle (`modelKey`; each test stores the model it used, shown on its card, in the comparison table and in the analysis tabs)
   - `src/lib/stage.js`: the imperative `Stage` class (charge → mix → cast → cure → test). `components/StageView.jsx` wraps it: React renders an empty `<svg id="stage">` and the class owns everything inside it. During the Charge step it flies clones of the panel's ingredient icons into the drum, so `MixPanel` passes the icon elements up through `iconRefs`.
   - `components/`: `MixPanel`, `IngredientIcon` (each icon has a `.mat` group scaled by amount), `TestLog` (cards + comparison table), `Analysis` (age and sensitivity tabs), `charts.jsx` (LineChart/BarChart sized with ResizeObserver), `Tooltip`
   - `src/styles.css` was copied as-is from the old app, and the components rely on its class names (`.stage-card`, `.panel-card`, `.drawer`, `.flyer`, …).

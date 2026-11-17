@@ -7,13 +7,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from model_service import ModelService
+from model_service import DEFAULT_MODEL, ModelService, load_services
 
 DIST_DIR = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
@@ -23,7 +23,16 @@ app = FastAPI(
                 "Know the strength before you pour.",
     version="1.0.0",
 )
-service = ModelService.load()
+services = load_services()   # {"constrained": ModelService, "unconstrained": ModelService}
+
+# Every POST route takes ?model=<key> to pick the model; it defaults to the physics-constrained one.
+ModelKey = Query(DEFAULT_MODEL, description=f"Which model to use: {', '.join(services)}")
+
+
+def pick(model: str) -> ModelService:
+    if model not in services:
+        raise HTTPException(status_code=422, detail=f"Unknown model '{model}'. Available: {', '.join(services)}")
+    return services[model]
 
 # The Vite dev server (npm run dev, :5173) proxies /api, but allow direct calls too.
 app.add_middleware(
@@ -48,27 +57,30 @@ class Mix(BaseModel):
 
 @app.get("/api/meta")
 def meta() -> dict:
-    return service.meta()
+    out = services[DEFAULT_MODEL].meta()
+    out["models"] = [s.summary(key) for key, s in services.items()]
+    out["default_model"] = DEFAULT_MODEL
+    return out
 
 
 @app.post("/api/predict")
-def predict(mix: Mix) -> dict:
-    return service.predict(mix.model_dump())
+def predict(mix: Mix, model: str = ModelKey) -> dict:
+    return pick(model).predict(mix.model_dump())
 
 
 @app.post("/api/age-curve")
-def age_curve(mix: Mix) -> list[dict]:
-    return service.age_curve(mix.model_dump())
+def age_curve(mix: Mix, model: str = ModelKey) -> list[dict]:
+    return pick(model).age_curve(mix.model_dump())
 
 
 @app.post("/api/sensitivity")
-def sensitivity(mix: Mix) -> dict:
-    return service.sensitivity(mix.model_dump())
+def sensitivity(mix: Mix, model: str = ModelKey) -> dict:
+    return pick(model).sensitivity(mix.model_dump())
 
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "model": service.model_name}
+    return {"status": "ok", "models": {key: s.model_name for key, s in services.items()}}
 
 
 # Mounted last so /api routes take precedence

@@ -135,7 +135,9 @@ function LineSvg({
 export function BarChart({ rows, unit = 'MPa', fmt = v => v.toFixed(1) }) {
   const [wrapRef, measured] = useWidth();
   const width = Math.min(900, Math.max(320, measured || 760));
-  const rowH = 30, m = { t: 6, r: 70, b: 6, l: 150 };
+  // Label column grows with the longest label (about 6.6 px per character at 12 px), within 150–300 px
+  const longest = Math.max(...rows.map(r => r.label.length));
+  const rowH = 30, m = { t: 6, r: 70, b: 6, l: Math.min(300, Math.max(150, Math.round(longest * 6.6) + 16)) };
   const height = m.t + m.b + rows.length * rowH;
   const max = Math.max(...rows.map(r => r.value)) * 1.05 || 1;
   const W = width - m.l - m.r;

@@ -10,7 +10,7 @@ export function AgeTab({ latest, meta }) {
   return (
     <>
       <p className="hint">
-        Cube #{test.id} ({test.label}). Shaded band = ±{result.rmse_mpa.toFixed(1)} MPa typical error.
+        Cube #{test.id} ({test.label}, {test.model.label} {test.model.model_name}). Shaded band = ±{result.rmse_mpa.toFixed(1)} MPa typical error.
         {at28 ? ` 28-day strength ≈ ${at28.toFixed(1)} MPa.` : ''}
       </p>
       <LineChart
@@ -37,8 +37,9 @@ export function SensitivityTab({ latest, meta }) {
   return (
     <>
       <p className="hint">
-        Cube #{test.id}: each panel varies one input across its training range, others held fixed.
-        Shared y-axis, so steeper panels matter more. The ring marks the current value.
+        Cube #{test.id} ({test.model.label} {test.model.model_name}): each panel varies one input across its
+        training range, others held fixed. Shared y-axis, so steeper panels matter more. The ring marks the current value.
+        {!test.model.constrained && ' This model is not physics-constrained, so bumps that go against the physics are possible.'}
       </p>
       <div className="sens-grid">
         {meta.features.map(f => {

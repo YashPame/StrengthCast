@@ -13,10 +13,16 @@ import joblib
 import numpy as np
 import pandas as pd
 
-# The model is loaded straight from the ML notebooks' output folder (backend/ML/models).
-# To switch models, change MODEL_FILE to another bundle saved in that folder.
+# Models are loaded straight from the ML notebooks' output folder (backend/ML/models).
+# The UI can switch between these; each request names one by key (default: DEFAULT_MODEL).
+# A bundle whose file is missing is skipped, so the app still runs with only the default model.
 MODEL_DIR = Path(__file__).resolve().parent / "ML" / "models"
-MODEL_FILE = "concrete_strength_model_v3.joblib"
+MODELS = {
+    "constrained": {"file": "concrete_strength_model_v3.joblib", "label": "Physics-constrained"},
+    "unconstrained": {"file": "concrete_strength_model_v3_unconstrained.joblib", "label": "Unconstrained"},
+}
+DEFAULT_MODEL = "constrained"
+MODEL_FILE = MODELS[DEFAULT_MODEL]["file"]
 MODEL_PATH = MODEL_DIR / MODEL_FILE
 
 # Test ages present in the training data. Predictions between them are interpolation by the trees.
@@ -79,6 +85,7 @@ class ModelService:
     ranges: dict[str, dict[str, float]]
     metrics: dict[str, float]
     model_name: str
+    constrained: bool = True
 
     @classmethod
     def load(cls, path: Path = MODEL_PATH) -> "ModelService":
@@ -89,7 +96,13 @@ class ModelService:
             ranges=bundle["feature_ranges"],
             metrics=bundle["metrics"],
             model_name=bundle["model_name"],
+            constrained=bool(bundle.get("constrained", True)),
         )
+
+    def summary(self, key: str) -> dict:
+        """What the UI's model switch shows for this model."""
+        return {"key": key, "label": MODELS[key]["label"], "model_name": self.model_name,
+                "constrained": self.constrained, "metrics": self.metrics}
 
     @property
     def rmse(self) -> float:
@@ -200,3 +213,13 @@ class ModelService:
             "wb_range": WB_RANGE,
             "wb_dry_no_sp": WB_DRY_NO_SP,
         }
+
+
+def load_services() -> dict[str, ModelService]:
+    """Load every model in MODELS whose bundle exists. The default model must exist."""
+    services = {}
+    for key, info in MODELS.items():
+        path = MODEL_DIR / info["file"]
+        if path.exists() or key == DEFAULT_MODEL:
+            services[key] = ModelService.load(path)
+    return services

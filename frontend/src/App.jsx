@@ -13,13 +13,17 @@ const STEPS = [
 ];
 const TABS = [['log', 'Test log'], ['age', 'Strength vs age'], ['sens', 'Sensitivity']];
 
-// Hover text for the model chip: typical error for known mixes, and for brand-new mix designs if the bundle has it.
-function modelChipTitle(m) {
-  const lines = [`Typical error ±${m.test_RMSE.toFixed(2)} MPa (held-out test set, MAE ${m.test_MAE?.toFixed(2) ?? '–'} MPa).`];
+// Hover text for a model: typical error for known mixes, for brand-new mix designs, and whether it is constrained.
+function modelTitle(md) {
+  const m = md.metrics;
+  const lines = [`${md.label} ${md.model_name}`,
+    `Typical error ±${m.test_RMSE.toFixed(2)} MPa (held-out test set, MAE ${m.test_MAE?.toFixed(2) ?? '–'} MPa).`];
   if (m.new_mix_grouped_cv_RMSE != null) {
     lines.push(`Brand-new mix designs: ±${m.new_mix_grouped_cv_RMSE.toFixed(2)} MPa (grouped CV R² ${m.new_mix_grouped_cv_R2.toFixed(3)}).`);
   }
-  lines.push('Physics-constrained: strength never falls with age or cement, never rises with water.');
+  lines.push(md.constrained
+    ? 'Physics-constrained: strength never falls with age or cement, never rises with water.'
+    : 'Not constrained: age curves and sensitivity charts can show bumps that contradict concrete physics.');
   return lines.join('\n');
 }
 
@@ -28,6 +32,7 @@ export default function App() {
   const [apiError, setApiError] = useState(null);
   const [mix, setMix] = useState(null);
   const [presetKey, setPresetKey] = useState(null);
+  const [modelKey, setModelKey] = useState(null);   // which model the next test uses
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(null);
   // Server warnings from the last test stay visible until the mix is edited.
@@ -48,6 +53,7 @@ export default function App() {
         setMeta(m);
         setMix({ ...m.presets[m.default_preset].mix });
         setPresetKey(m.default_preset);
+        setModelKey(m.default_model);
       })
       .catch(err => setApiError(err.message));
   }, []);
@@ -71,9 +77,11 @@ export default function App() {
     setRunning(true);
     const m = { ...mix };
     const label = presetKey ? meta.presets[presetKey].label : 'Custom';
+    const model = meta.models.find(md => md.key === modelKey);
+    const q = `?model=${encodeURIComponent(model.key)}`;
     try {
-      const curvesP = Promise.all([api('age-curve', m), api('sensitivity', m)]);
-      const result = await api('predict', m);
+      const curvesP = Promise.all([api(`age-curve${q}`, m), api(`sensitivity${q}`, m)]);
+      const result = await api(`predict${q}`, m);
       setServerWarnings(result.warnings);
       // The animation always plays, except for users whose OS asks for reduced motion
       const noAnim = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -89,7 +97,7 @@ export default function App() {
         .map(([name, el]) => ({ el, color: INGREDIENTS[name].color, amount: m[name] }));
       await stageRef.current.run(result, m, { skip: noAnim, flyers });
 
-      const test = { id: nextId.current++, mix: m, result, label, time: new Date() };
+      const test = { id: nextId.current++, mix: m, result, label, model, time: new Date() };
       setTests(t => [test, ...t]);
       const [curve, sens] = await curvesP;
       setLatest({ test, curve, sens });
@@ -110,7 +118,8 @@ export default function App() {
   };
 
   // ------------------------------------------------------------ render
-  const metrics = meta?.metrics;
+  const activeModel = meta?.models.find(md => md.key === modelKey);
+  const metrics = activeModel?.metrics;
   const warnings = apiError
     ? [{ level: 'warning', message: `Could not reach the prediction API (${apiError}). Start the server from the backend folder with: uvicorn app:app --reload` }]
     : serverWarnings ?? (meta && mix ? localWarnings(mix, meta) : []);
@@ -128,10 +137,23 @@ export default function App() {
             <p>Machine Learning-Based Concrete Compressive Strength Prediction</p>
           </div>
         </div>
-        <div className="model-chip" title={metrics ? modelChipTitle(metrics) : undefined}>
-          {apiError ? 'API unavailable'
-            : metrics ? `${meta.model_name} · test R² ${metrics.test_R2.toFixed(3)} · RMSE ${metrics.test_RMSE.toFixed(2)} MPa`
-              : 'Loading model…'}
+        <div className="model-switch">
+          {meta && meta.models.length > 1 && (
+            <div className="presets" role="radiogroup" aria-label="Prediction model">
+              {meta.models.map(md => (
+                <button key={md.key} type="button" role="radio" aria-checked={md.key === modelKey}
+                  className={`preset ${md.key === modelKey ? 'active' : ''}`} disabled={running}
+                  title={modelTitle(md)} onClick={() => setModelKey(md.key)}>
+                  {md.label}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="model-chip" title={activeModel ? modelTitle(activeModel) : undefined}>
+            {apiError ? 'API unavailable'
+              : metrics ? `${activeModel.model_name} · test R² ${metrics.test_R2.toFixed(3)} · RMSE ${metrics.test_RMSE.toFixed(2)} MPa`
+                : 'Loading model…'}
+          </div>
         </div>
       </header>
 
