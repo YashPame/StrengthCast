@@ -32,6 +32,14 @@ CUBE_AREA_MM2 = 150 * 150
 # Realistic fresh-concrete density window (kg/m^3)
 DENSITY_RANGE = (2200.0, 2600.0)
 
+# Water/binder (binder = cement + slag + fly ash) checks. Each ingredient can be inside its own range
+# while the combination is not, so w/b is checked on its own:
+# - WB_RANGE: w/b span of the training data (0.235-0.90); outside it the prediction is an extrapolation.
+# - Below WB_DRY_NO_SP without superplasticizer the mix is likely too stiff to compact. Only 15 of the
+#   378 training rows without SP go below 0.35. The model assumes full compaction and cannot see this.
+WB_RANGE = (0.235, 0.90)
+WB_DRY_NO_SP = 0.35
+
 FEATURE_INFO = {
     "cement":             {"label": "Cement",             "unit": "kg/m³", "step": 1.0},
     "blast_furnace_slag": {"label": "Blast furnace slag", "unit": "kg/m³", "step": 1.0},
@@ -122,11 +130,23 @@ class ModelService:
         elif mix["age"] not in AGES and self.ranges["age"]["min"] <= mix["age"] <= self.ranges["age"]["max"]:
             out.append({"field": "age", "level": "info",
                         "message": f"Age {mix['age']:g} d was not a tested age; nearest tested ages are used implicitly."})
-        total = self.derived(mix)["total_mass"]
+        d = self.derived(mix)
+        total = d["total_mass"]
         if not DENSITY_RANGE[0] <= total <= DENSITY_RANGE[1]:
             out.append({"field": "total_mass", "level": "warning",
                         "message": f"Total mass {total:.0f} kg/m³ is outside the realistic "
                                    f"{DENSITY_RANGE[0]:.0f}–{DENSITY_RANGE[1]:.0f} kg/m³ range for concrete."})
+        wb = d["water_binder_ratio"]
+        if wb is not None:
+            if not WB_RANGE[0] <= wb <= WB_RANGE[1]:
+                out.append({"field": "water_binder_ratio", "level": "warning",
+                            "message": f"Water/binder ratio {wb:.2f} is outside the training range "
+                                       f"({WB_RANGE[0]:.2f}–{WB_RANGE[1]:.2f}); the prediction is an extrapolation."})
+            if wb < WB_DRY_NO_SP and mix["superplasticizer"] == 0:
+                out.append({"field": "water_binder_ratio", "level": "warning",
+                            "message": f"Water/binder ratio {wb:.2f} with no superplasticizer: this mix may be "
+                                       f"too stiff to place and compact. The model assumes full compaction, so the "
+                                       f"prediction may be optimistic. Add superplasticizer or more water."})
         return out
 
     # ------------------------------------------------------------------ public API
@@ -177,4 +197,6 @@ class ModelService:
             "metrics": self.metrics,
             "cube_area_mm2": CUBE_AREA_MM2,
             "density_range": DENSITY_RANGE,
+            "wb_range": WB_RANGE,
+            "wb_dry_no_sp": WB_DRY_NO_SP,
         }

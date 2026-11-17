@@ -24,6 +24,8 @@ Selected: **LightGBM, tuned, physics-constrained** (`models/concrete_strength_mo
 | **LightGBM tuned + constrained (selected)** | **0.928** | **4.35** | **0.944** | **3.73** | **2.53** | **passes** |
 
 - On brand-new mix designs (grouped-by-mix CV, all 1005 rows) the selected model scores R² 0.900, RMSE 5.07 MPa.
+  The unconstrained LightGBM scores R² 0.903, RMSE 5.02 MPa on the same check (per-fold RMSE spread about ±0.5 MPa).
+  The two are tied on new mixes, so the constrained model costs essentially nothing there.
 - Engineered features beat raw features for every model; boosting models (LightGBM, XGBoost, HistGB) lead.
 - Optuna improved CV RMSE by 0.25–0.59 MPa over the defaults.
 - Constraints cost ~0.14 MPa CV RMSE for the boosting models, but wreck Random Forest / Extra Trees / Decision
@@ -42,6 +44,10 @@ Selected: **LightGBM, tuned, physics-constrained** (`models/concrete_strength_mo
   water/binder, water/cement and total binder are used as ratios: SCM fraction, SP/binder and
   aggregate/binder contain cement but have no safe direction, and with them adding cement lowered strength
   in about 7 of 10 mixes.
+- **Workability is not modelled.** The water constraint means less water always predicts more strength, but a
+  real mix that is too dry can't be compacted and gets weaker. The data has no slump column. Every mix below
+  w/b 0.28 uses superplasticizer, and only 15 of the 378 mixes without SP go below w/b 0.35. The app
+  (`model_service.py`, `frontend/src/lib/mix.js`) therefore warns on w/b < 0.35 with no SP, and on w/b outside 0.235–0.90.
 - **√strength target.** The model learns √strength and the output is clipped at 0 and squared, so strength
   can't be negative (with a plain target, low-cement mixes only tested at 28 days got about −10 MPa at 3 days).
 - **Final model is refit on all rows** after evaluation; the reported metrics come from the held-out test

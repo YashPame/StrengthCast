@@ -8,6 +8,8 @@ export default function MixPanel({
 }) {
   const d = derived(mix);
   const [lo, hi] = meta.density_range;
+  const [wbLo, wbHi] = meta.wb_range ?? [0, Infinity];
+  const wbBad = d.wb != null && (d.wb < wbLo || d.wb > wbHi || (d.wb < meta.wb_dry_no_sp && mix.superplasticizer === 0));
   const ingredients = meta.features.filter(f => f.name !== 'age');
 
   return (
@@ -48,7 +50,7 @@ export default function MixPanel({
 
       <div className="derived">
         <div><span className="k">w/c ratio</span><span className="v">{d.wc == null ? '–' : d.wc.toFixed(2)}</span></div>
-        <div><span className="k">w/b ratio</span><span className="v">{d.wb == null ? '–' : d.wb.toFixed(2)}</span></div>
+        <div><span className="k">w/b ratio</span><span className={`v ${wbBad ? 'bad' : ''}`}>{d.wb == null ? '–' : d.wb.toFixed(2)}</span></div>
         <div><span className="k">Binder</span><span className="v">{d.binder.toFixed(0)} kg</span></div>
         <div><span className="k">Total mass</span><span className={`v ${d.total < lo || d.total > hi ? 'bad' : ''}`}>{d.total.toFixed(0)} kg</span></div>
       </div>

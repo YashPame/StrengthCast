@@ -36,7 +36,7 @@ This is the web UI. A FastAPI backend serves both the JSON API and the static fr
   - `backend/` is not a package: the server runs from inside it (`uvicorn app:app`), so `app.py` uses `from model_service import ...`. Scripts that import the backend from elsewhere must put `backend/` on `sys.path`
   - loads the bundle straight from `backend/ML/models/`; `MODEL_FILE` at the top of the file picks which one (no copying after retraining)
   - runs predict, age-curve and sensitivity
-  - checks inputs against training ranges and the 2200–2600 kg/m³ density window
+  - checks inputs against training ranges and the 2200–2600 kg/m³ density window, plus w/b outside 0.235–0.90 and a workability warning for w/b < 0.35 with no superplasticizer (`WB_RANGE`, `WB_DRY_NO_SP`; sent in `/api/meta` and mirrored in `frontend/src/lib/mix.js`)
   - defines the presets (real 28-day mixes from the dataset)
 - `backend/app.py` holds the pydantic `Mix` model (one flat body: 7 ingredients + `age`) and the routes (`/api/meta`, `/api/predict`, `/api/age-curve`, `/api/sensitivity`, `/api/health`). It serves the built `frontend/dist` at `/`.
 - `frontend/` is React 18 + Vite (plain JSX). The only libraries are react and react-dom. Charts and the animation are hand-written SVG. The design was ported from the earlier vanilla-JS version in `ApplicationOld/`.

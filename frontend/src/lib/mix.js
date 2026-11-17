@@ -20,8 +20,14 @@ export function localWarnings(mix, meta) {
     }
   }
   const [lo, hi] = meta.density_range;
-  const { total } = derived(mix);
+  const { total, wb } = derived(mix);
   if (total < lo || total > hi) out.push({ level: 'warning', message: `Total mass ${total.toFixed(0)} kg/m³ is outside the realistic ${lo}–${hi} kg/m³ range for concrete.` });
+  // Water/binder checks: the combination can be unusual even when every ingredient is in range.
+  if (wb != null && meta.wb_range) {
+    const [wbLo, wbHi] = meta.wb_range;
+    if (wb < wbLo || wb > wbHi) out.push({ level: 'warning', message: `Water/binder ratio ${wb.toFixed(2)} is outside the training range (${wbLo.toFixed(2)}–${wbHi.toFixed(2)}). The prediction is an extrapolation.` });
+    if (wb < meta.wb_dry_no_sp && mix.superplasticizer === 0) out.push({ level: 'warning', message: `Water/binder ratio ${wb.toFixed(2)} with no superplasticizer: this mix may be too stiff to place and compact. The model assumes full compaction, so the prediction may be optimistic. Add superplasticizer or more water.` });
+  }
   if (!(mix.cement > 0)) out.push({ level: 'warning', message: 'Cement must be greater than 0.' });
   return out;
 }

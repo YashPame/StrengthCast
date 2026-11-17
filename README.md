@@ -45,9 +45,14 @@ it fails at the predicted load.
   (MPa) on an LCD and a dial with a peak-hold needle. The cube cracks and fails in the classic hourglass
   shape at the predicted load (failure load in kN = MPa × 22.5 for a 150 mm cube).
 - **Live derived values.** Water/cement and water/binder ratios, total binder and total mass update as you type.
-- **Input checks.** Any value outside the training data range is flagged as an extrapolation, and a total
-  mass outside the realistic 2200–2600 kg/m³ window is also flagged. The app still predicts, but it tells
-  you not to trust the number blindly.
+- **Input checks.** The app still predicts, but it tells you when not to trust the number blindly:
+  - any ingredient or age outside the training data range is flagged as an extrapolation;
+  - a total mass outside the realistic 2200–2600 kg/m³ window is flagged;
+  - a **water/binder ratio** outside the training range (0.235–0.90) is flagged. Every ingredient can be in
+    range while the combination is not;
+  - a **dry mix without superplasticizer** (w/b below 0.35 with no SP) gets a workability warning. Such a mix may be
+    too stiff to place and compact, so its real strength would fall, but the model assumes full compaction and would
+    keep predicting more strength as water drops. The w/b value turns orange when either w/b check fires.
 - **Uncertainty.** Every prediction carries ± the model's test RMSE (3.73 MPa). Hovering the model chip in the
   header also shows the larger error for brand-new mix designs (5.07 MPa).
 - **Test log and comparison.** Every cube you test is logged. Tick two or more to compare them side by
@@ -78,6 +83,10 @@ panel on the right holds the inputs.
 
 ![Sensitivity analysis](docs/images/sensitivity.png)
 
+**Workability warning.** The Standard mix with water cut to 135 kg and no superplasticizer (w/b 0.34).
+
+![Workability warning for a dry mix without superplasticizer](docs/images/workability-warning.png)
+
 ## How it works
 
 ### Architecture
@@ -98,7 +107,7 @@ Editable source: [`docs/StrengthCast.drawio`](docs/StrengthCast.drawio). Open it
 
 1. The frontend sends the 8 raw inputs: 7 ingredients in kg/m³ plus age in days.
 2. The backend loads the trained pipeline once at startup and checks the inputs against the training
-   ranges and the density window.
+   ranges, the density window and the water/binder checks.
 3. The pipeline's first step (`ConcreteFeatures`) derives the engineered features, so training and serving
    always run the same code.
 4. The prediction comes back **before** the animation starts; the animation only reveals it.
@@ -111,7 +120,7 @@ The notebooks in [`backend/ML/`](backend/ML) form the pipeline and are run in or
 | Notebook | Purpose |
 |---|---|
 | `01_Data_Loading` | Load and inspect the raw data (1030 rows, including 25 exact duplicates, so 1005 unique rows from 428 mix designs are used) |
-| `02_EDA` | Distributions, correlations, multicollinearity (VIF), strength vs age |
+| `02_EDA` | Distributions, correlations, multicollinearity (VIF), strength vs age. Findings: [`docs/EDA_and_Outlier_Insights.md`](docs/EDA_and_Outlier_Insights.md) |
 | `03_OutlierDetection` | IQR and z-score checks. All rows are kept: the flagged ones are real high-performance or edge-of-range mixes |
 | `04_DataSplit` | Dedupe → 80/20 train/test split and 5 CV folds (stratified by curing age) → engineered features |
 | `05_Model` | Baselines (raw vs engineered) → Optuna tuning of the top 3 → physics constraints → test set → new-mix check → save |
@@ -171,8 +180,11 @@ guide: there every row of a mix stays on one side of the split, so the mix is ne
 | XGBoost | tuned + constrained | 0.926 | 4.38 | 0.940 | 3.86 | passes |
 | **LightGBM** | **tuned + constrained (selected)** | **0.928** | **4.35** | **0.944** | **3.73** | **passes** |
 
-The unconstrained LightGBM is about 0.3 MPa more accurate, but its age curves and sensitivity sweeps contradict
-concrete physics, and the app shows exactly those views. The constraints were kept.
+The unconstrained LightGBM is about 0.3 MPa more accurate on the row split, but on **brand-new mix designs**
+(grouped-by-mix CV) the two are tied: R² 0.903 / RMSE 5.02 MPa unconstrained against 0.900 / 5.07 MPa constrained,
+a gap smaller than the ±0.5 MPa spread between folds. Its extra accuracy comes from mixes it has already seen.
+Its age curves and sensitivity sweeps contradict concrete physics, and the app shows exactly those views, so the
+constraints were kept.
 
 ## Tech stack
 
@@ -206,6 +218,7 @@ concrete physics, and the app shows exactly those views. The constraints were ke
 │       └── components/      MixPanel, IngredientIcon, StageView, TestLog, Analysis, charts, Tooltip
 ├── docs/
 │   ├── StrengthCast.drawio  Architecture diagram (editable source) + StrengthCast.png export
+│   ├── EDA_and_Outlier_Insights.md   Cell-by-cell findings of 02_EDA and 03_OutlierDetection
 │   └── images/              README screenshots and demo GIF
 └── requirements.txt
 ```
@@ -273,7 +286,7 @@ Every POST body is one flat JSON object: the 7 ingredients in kg/m³ plus `age` 
 
 | Method | Path | Returns |
 |---|---|---|
-| GET | `/api/meta` | Input ranges and steps, ages, presets, model metrics, density window |
+| GET | `/api/meta` | Input ranges and steps, ages, presets, model metrics, density window, w/b range and dry-mix threshold |
 | POST | `/api/predict` | `strength_mpa`, `low_mpa` / `high_mpa` (± test RMSE), `failure_load_kn`, derived ratios, `warnings` |
 | POST | `/api/age-curve` | `[{ "age": …, "strength_mpa": … }]` for 3–365 days |
 | POST | `/api/sensitivity` | For each input, a sweep across its training range with the others held fixed |
@@ -296,6 +309,10 @@ negative cement or water value, are rejected with a 422 error.
   (for example cement 102–540 kg/m³, water 121.75–247 kg/m³, age 1–365 days). The app flags anything outside them.
 - **No physical properties beyond the mix.** Cement type, aggregate shape and grading, curing temperature,
   compaction and admixture chemistry are not inputs, so two mixes with the same proportions can still differ in reality.
+- **Full compaction is assumed.** The dataset has no workability (slump) data, so the model cannot tell when a
+  mix is too dry to place. Because of the physics constraint it always predicts more strength for less water.
+  Real high-strength concrete reaches low w/b with superplasticizer: every training mix below w/b 0.28 uses it.
+  The app warns when w/b is below 0.35 without superplasticizer.
 - **Sensitivity curves show model behaviour.** Changing one ingredient while holding the others fixed can
   produce mixes that wouldn't exist in practice, and tree models give stepped curves. Read the trend, not each step.
 - **Age 1 day is not offered**, because the data has only 2 one-day samples.
