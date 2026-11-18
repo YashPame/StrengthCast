@@ -47,3 +47,4 @@ desktop.ini
 # Note: datasets (backend/Data/) and trained models (backend/ML/models/) are small and ARE
 # committed, because the app loads the model at startup.
 .claude/*
+CLAUDE.md
